@@ -4,8 +4,7 @@
  *
  * @format
  */
-
-import React from 'react';
+import React, {useEffect} from 'react';
 import type {PropsWithChildren} from 'react';
 import {
   SafeAreaView,
@@ -24,36 +23,10 @@ import {
   LearnMoreLinks,
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
-
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
+import SitumPlugin from '@situm/react-native';
+import {SITUM_API_KEY, SITUM_DASHBOARD_URL} from './situm';
+import {PERMISSIONS, request, RESULTS} from 'react-native-permissions';
+import SitumNavigation from './src/SitumNavigation/SitumNavigation';
 
 function App(): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
@@ -62,36 +35,39 @@ function App(): React.JSX.Element {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
   };
 
+  useEffect(() => {
+    try {
+      SitumPlugin.init();
+      SitumPlugin.setDashboardURL(SITUM_DASHBOARD_URL);
+      SitumPlugin.setApiKey(SITUM_API_KEY);
+    } catch (e) {
+      console.error(`Situm > example > Could not initialize SDK ${e}`);
+    }
+    checkIOSPermissions();
+  }, []);
+
+  const checkIOSPermissions = async () => {
+    const granted = await request(PERMISSIONS.IOS.LOCATION_WHEN_IN_USE);
+
+    // Check if already denied
+    if (granted !== RESULTS.GRANTED) {
+      throw 'Situm > permissions > ACCESS_FINE_LOCATION denied...';
+    }
+
+    console.debug(
+      'Situm > permissions > LOCATION_WHEN_IN_USE permission granted...',
+    );
+
+    return true;
+  };
+
   return (
     <SafeAreaView style={backgroundStyle}>
       <StatusBar
         barStyle={isDarkMode ? 'light-content' : 'dark-content'}
         backgroundColor={backgroundStyle.backgroundColor}
       />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
+      <SitumNavigation />
     </SafeAreaView>
   );
 }
