@@ -36,14 +36,20 @@ function App(): React.JSX.Element {
   };
 
   useEffect(() => {
-    try {
-      SitumPlugin.init();
-      SitumPlugin.setDashboardURL(SITUM_DASHBOARD_URL);
-      SitumPlugin.setApiKey(SITUM_API_KEY);
-    } catch (e) {
-      console.error(`Situm > example > Could not initialize SDK ${e}`);
-    }
-    checkIOSPermissions();
+    // (1) Note that the initial render Effect at the App level will be executed *after* its
+    // counterpart in SitumNavigation.tsx. Therefore, the SDK will not be properly initialized,
+    // and any invocation of SitumPlugin will cause an exception.
+    // See initialization below.
+    // try {
+    //   SitumPlugin.init();
+    //   SitumPlugin.setDashboardURL(SITUM_DASHBOARD_URL);
+    //   SitumPlugin.setApiKey(SITUM_API_KEY);
+    // } catch (e) {
+    //   console.error(`Situm > example > Could not initialize SDK ${e}`);
+    // }
+    // (2) This call will always throw an exception on Android. SitumNavigation.tsx is already
+    // checking permissions, so this call seems unnecessary.
+    // checkIOSPermissions();
   }, []);
 
   const checkIOSPermissions = async () => {
@@ -60,6 +66,16 @@ function App(): React.JSX.Element {
 
     return true;
   };
+
+  try {
+    SitumPlugin.init();
+    SitumPlugin.setDashboardURL(SITUM_DASHBOARD_URL);
+    SitumPlugin.setApiKey(SITUM_API_KEY);
+  } catch (e) {
+    console.error(`Situm > example > Could not initialize SDK ${e}`);
+    // TODO: handle this error properly.
+    // return <MyCustomErrorView />
+  }
 
   return (
     <SafeAreaView style={backgroundStyle}>
